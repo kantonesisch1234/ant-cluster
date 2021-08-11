@@ -4,7 +4,7 @@ r=0
 
 gradv(x,y) = ForwardDiff.gradient(z -> v(z[1], z[2]), [x, y])
 
-function deterministic(du, u, p, t)
+function deterministic(du, u, p, t, A=A, D2=D2, threshold=threshold)
     
     # p = initial speed of ant
     # pot = gradient of potential field (in 2-elements array [rho_x, rho_y])
@@ -27,7 +27,7 @@ function deterministic(du, u, p, t)
     
 end
 
-function stochastic(du, u, p, t)
+function stochastic(du, u, p, t, A=A, D2=D2, threshold=threshold)
     
     du[1] = 0
     du[2] = 0
@@ -48,7 +48,7 @@ function newtonian(du, u, p, t)
 end
 
 # Condition to terminate the ODE if either the ant or the pheromone detection is out of the defined domain to prevent error
-function condition(u, t, integrator)
+function condition(u, t, integrator, domain=domain)
     abs(u[1]) >= domain || abs(u[2]) >= domain
 end
 
@@ -72,7 +72,7 @@ Total number of ants = n
 # init_direction: nothing - if random: random; if not random: uniform; Arrays - [theta1, theta2, ..., thetan]; Real number - all same direction
 # eq = "newtonian" or "pheromone"
 
-function set_initial_conditions(n, speed; random_direction=true, init_pos=(0,0), init_direction=nothing, sim="fixed_speed", save_plot=false, eq="pheromone")
+function set_initial_conditions(n, speed; random_direction=true, init_pos=(0,0), init_direction=nothing, sim="fixed_speed", save_plot=false, eq="pheromone", domain=domain, time_interval=time_interval, tspan=tspan)
    
     # speed means speed of an ant in fixed_speed case and mps in Maxwell distribution case
     # direction takes in an angle, only applies for n=1
@@ -101,7 +101,7 @@ function set_initial_conditions(n, speed; random_direction=true, init_pos=(0,0),
 	return (init_pos, init_direction)
 end
 	
-function ode_solver_part(n, speed, tspan_part, init_pos, init_direction; random_direction=true, sim="fixed_speed", save_plot=false, eq="pheromone")
+function ode_solver_part(n, speed, tspan_part, init_pos, init_direction; random_direction=true, sim="fixed_speed", save_plot=false, eq="pheromone", domain=domain, time_interval=time_interval, tspan=tspan)
 
     # speed means speed of an ant in fixed_speed case and mps in Maxwell distribution case
     # direction takes in an angle, only applies for n=1
@@ -224,7 +224,7 @@ function ode_solver_part(n, speed, tspan_part, init_pos, init_direction; random_
 
 end
     
-function ode_solver(n, speed, chunks; random_direction=true, init_pos=(0,0), init_direction=nothing, sim="fixed_speed", save_plot=false, eq="pheromone")
+function ode_solver(n, speed, chunks; random_direction=true, init_pos=(0,0), init_direction=nothing, sim="fixed_speed", save_plot=false, eq="pheromone", domain=domain, time_interval=time_interval, tspan=tspan)
 
 	global hist = zeros(freq_plot_intervals, freq_plot_intervals)
 	

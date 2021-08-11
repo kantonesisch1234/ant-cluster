@@ -85,8 +85,8 @@ function v(x,y)
     end
 end
 
-potential = [v(i, j) for j in y, i in x]
-potential_plot = contour(x, y, potential, fill=true, dpi=300)
+# potential = [v(i, j) for j in y, i in x]
+# potential_plot = contour(x, y, potential, fill=true, dpi=300)
 
 pos = [ones(n).*(-domain), range(-domain/2, length=n, domain/2)]
 direction = 0
