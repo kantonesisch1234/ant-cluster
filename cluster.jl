@@ -1,4 +1,6 @@
 #!/usr/lmp/julia/bin/julia
+using Profile
+
 include("random_potential.jl")
 println("random_potential.jl loaded")
 include("ODE_solver_reduced.jl")
@@ -83,6 +85,22 @@ function v(x,y)
     end
 end
 
+vx(x,y) = -potential_amp*(x-potential_center)*v(x,y)/potential_sd^2
+
+function vy(x,y)
+    if gaussian_dim == "1"
+        return 0
+    elseif gaussian_dim == "2"
+        return -potential_amp*y*v(x,y)/domain^2
+    end
+end
+
+function simulate(n)
+    ant_coor_x, ant_coor_y, ant_direction = ode_solver(n, speed, init_pos = pos, init_direction = direction, random_direction = false, eq=pot_type)
+    hist = get_freq_array(ant_coor_x, ant_coor_y)
+    save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
+end
+
 # potential = [v(i, j) for j in y, i in x]
 # potential_plot = contour(x, y, potential, fill=true, dpi=300)
 
@@ -93,7 +111,6 @@ time_min = 0.0
 tspan = (time_min, time_max)
 alpha_max = nothing
 
-ant_coor_x, ant_coor_y, ant_direction = ode_solver(n, speed, init_pos = pos, init_direction = direction, random_direction = false, eq=pot_type)
-hist = get_freq_array(ant_coor_x, ant_coor_y)
-save_data_to_json(ARGS, joinpath(group_directory, "$(run_name)_parameters.json"))
-save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
+simulate(5)
+Profile.clear_malloc_data()
+simulate(n)

@@ -1,16 +1,11 @@
 # using DifferentialEquations, PyCall, DelimitedFiles, ProgressMeter, Distributions, Dates
-using DifferentialEquations, DelimitedFiles, ProgressMeter, Distributions, Dates, ForwardDiff
+using DifferentialEquations, DelimitedFiles, Distributions, Dates
 r=0
-
-gradv(x,y) = ForwardDiff.gradient(z -> v(z[1], z[2]), [x, y])
 
 function deterministic(du, u, p, t, A=A, D2=D2, threshold=threshold)
     
-    # p = initial speed of ant
-    # pot = gradient of potential field (in 2-elements array [rho_x, rho_y])
-    pot = gradv(u[1], u[2])
-    
-    alpha_temp = A*(-pot[1]*sin(u[3])+pot[2]*cos(u[3]))/(v(u[1],u[2])+threshold)
+    # p = initial speed of ant    
+    alpha_temp = A*(-vx(u[1],u[2])*sin(u[3])+vy(u[1],u[2])*cos(u[3]))/(v(u[1],u[2])+threshold)
     if alpha_max == nothing
         alpha = alpha_temp
     else
@@ -120,7 +115,7 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
     end
 
     # Each theta is actually an ant, or may be considered as some dimensionless angle 
-    @showprogress 1 for theta in 1:n
+    for theta in 1:n
         if sim=="fixed_speed"
             p = v0
         else
@@ -130,9 +125,9 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
 #         u0 = [init_pos[1][theta];init_pos[2][theta];p*cos(init_direction[theta]);p*sin(init_direction[theta]);init_direction[theta]]
         u0 = [init_pos[1][theta];init_pos[2][theta];init_direction[theta]]
         if eq == "pheromone"
-            global prob_sde = SDEProblem(deterministic,stochastic,u0,tspan,p,callback=cb)
+            prob_sde = SDEProblem(deterministic,stochastic,u0,tspan,p,callback=cb)
         elseif eq == "newtonian"
-            global prob_sde = SDEProblem(newtonian,stochastic,u0,tspan,p,callback=cb)
+            prob_sde = SDEProblem(newtonian,stochastic,u0,tspan,p,callback=cb)
         end
         
         sol = solve(prob_sde, saveat=time_interval)
