@@ -11,19 +11,19 @@ println("save_data.jl loaded")
 # ARGS = [1D/2D, n, domain, time_max, time_interval, potential_center, potential_sd, A, D2, threshold, freq_plot_intervals, group_name, run_name]
 
 # 1D Gaussian: 1, 2D Gaussian: 2
-gaussian_dim = ARGS[1]
-n = tryparse(Int64,ARGS[2])
-domain = tryparse(Float64,ARGS[3])
-time_max = tryparse(Float64, ARGS[4])
-time_interval = tryparse(Float64, ARGS[5])
-potential_center = tryparse(Float64, ARGS[6])
-potential_sd = tryparse(Float64, ARGS[7])
-A = tryparse(Float64,ARGS[8])
-D2 = tryparse(Float64,ARGS[9])
-threshold = tryparse(Float64,ARGS[10])
-freq_plot_intervals = tryparse(Int64,ARGS[11])
-group_name = ARGS[12]
-run_name = ARGS[13]
+const gaussian_dim = ARGS[1]
+const n = tryparse(Int64,ARGS[2])
+const domain = tryparse(Float64,ARGS[3])
+const time_max = tryparse(Float64, ARGS[4])
+const time_interval = tryparse(Float64, ARGS[5])
+const potential_center = tryparse(Float64, ARGS[6])
+const potential_sd = tryparse(Float64, ARGS[7])
+const A = tryparse(Float64,ARGS[8])
+const D2 = tryparse(Float64,ARGS[9])
+const threshold = tryparse(Float64,ARGS[10])
+const freq_plot_intervals = tryparse(Int64,ARGS[11])
+const group_name = ARGS[12]
+const run_name = ARGS[13]
 
 println("Parsed the arguments:")
 println("group_name: $(group_name)")
@@ -56,26 +56,31 @@ create_dir(json_file_directory)
 create_dir(group_directory)
 
 rho, fourier_interval, seed, sim = 1, 512, 1, "fixed_speed"
-x_min, x_max, y_min, y_max, interval_x, interval_y = -1*domain, domain, -1*domain, domain, fourier_interval, fourier_interval
+const x_min= -1*domain
+const x_max = domain
+const y_min = -domain
+const y_max =domain
+const interval_x = fourier_interval
+const interval_y = fourier_interval
 x, y = range(-domain, length=fourier_interval, domain), range(-domain, length=fourier_interval, domain)
 
-r = 0
+#const r = 0
 const β = 1
 pot_type = "pheromone"
 
 # Constructing the Gaussian potential and drawing the potential contour plots here
-potential_amp = 1
+const potential_amp = 1
 
 function v(x,y)
     # Standard normal distribution (Corrected with 1/2 term!)
     function snd(center, sd)
         return exp(-(x-center[1])^2/(2*sd[1]^2)-(y-center[2])^2/(2*sd[2]^2))
     end
-    
+
     function snd_no_y_grad(center, sd)
         return exp(-((x-center)^2/(2*sd^2)))
     end
-    
+
     if gaussian_dim == "1"
         return potential_amp*snd_no_y_grad(potential_center, potential_sd)
     elseif gaussian_dim == "2"
@@ -98,19 +103,19 @@ end
 function simulate(n)
     ant_coor_x, ant_coor_y, ant_direction = ode_solver(n, speed, init_pos = pos, init_direction = direction, random_direction = false, eq=pot_type)
     hist = get_freq_array(ant_coor_x, ant_coor_y)
-    save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
+    #save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
 end
 
 # potential = [v(i, j) for j in y, i in x]
 # potential_plot = contour(x, y, potential, fill=true, dpi=300)
 
 pos = [ones(n).*(-domain), range(-domain/2, length=n, domain/2)]
-direction = 0
-speed = 1.
-time_min = 0.0
+const direction = 0.0
+const speed = 1.
+const time_min = 0.0
 tspan = (time_min, time_max)
-alpha_max = nothing
+const alpha_max = nothing
 
-simulate(5)
-Profile.clear_malloc_data()
+# simulate(5)
+# Profile.clear_malloc_data()
 simulate(n)
