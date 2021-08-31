@@ -78,11 +78,15 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
     x_range = range(x_min, length=fourier_interval, stop=x_max)
     y_range = range(y_min, length=fourier_interval, stop=y_max)
 
-    ant_coor_x = [[] for i=1:n]
-    ant_coor_y = [[] for i=1:n]
-#     ant_v_x = [[] for i=1:n]
-#     ant_v_y = [[] for i=1:n]
-    ant_direction = [[] for i=1:n]
+    # ant_coor_x = [[] for i=1:n]
+    # ant_coor_y = [[] for i=1:n]
+    # ant_direction = [[] for i=1:n]
+
+    m = trunc(Int64,ceil(time_max/time_interval)+1)
+    ant_coor_x = zeros(n,m)
+    ant_coor_y = zeros(n,m)
+    # ant_direction = zeros(n,m)
+    time_steps = [0 for i in 1:n]
 
     if isa(init_pos,Tuple{Real, Real})
         init_pos = [ones(n).*init_pos[1], ones(n).*init_pos[2]]
@@ -101,16 +105,11 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
 
    # Plot the contour plot of pheromone density field again, the ant trajectories will be plotted above the contour plot.
 
-
     if sim == "fixed_speed"
         v0 = speed
-        # p_ants = contour(x_range, y_range, potential, fill=true,
-        # title=join([n, " ants on pheromone field, D2 = ", D2]), dpi=300)
     else
         mps = speed
         v0 = maxwell.rvs(size=n, scale=mps*2^(-0.5))
-        # p_ants = contour(x_range, y_range, potential, fill=true,
-        # title=join([n, " ants on pheromone field , mps = ", mps, ", D2 = ", D2]), dpi=300)
 
     end
 
@@ -122,7 +121,6 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
             p = v0[theta]
         end
 
-#         u0 = [init_pos[1][theta];init_pos[2][theta];p*cos(init_direction[theta]);p*sin(init_direction[theta]);init_direction[theta]]
         u0 = [init_pos[1][theta];init_pos[2][theta];init_direction[theta]]
         if eq == "pheromone"
             prob_sde = SDEProblem(deterministic,stochastic,u0,tspan,p,callback=cb)
@@ -133,29 +131,40 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
         sol = solve(prob_sde, saveat=time_interval)
 
 
+        for (bin, time) in enumerate(sol.t)
+            ant_coor_x[theta, bin] = sol.u[bin][1]
+            ant_coor_y[theta, bin] = sol.u[bin][2]
+            # ant_direction[theta, bin] = sol.u[bin][3]
+        end
+
+        # println("theta = $(theta)")
+        # println(ant_coor_x)
+        # println(" ")
+        # println(ant_coor_y)
+        # println(" ")
+        # println(ant_direction)
+        # println(" ")
+
+        time_steps[theta] = length(sol.t)
+        # println(time_steps)
+
+
         """ 
         To save the coordinates of all time in saveat is a little bit tricky here. 
         Each time when a callback is called, the element in sol.t repeats itself so to make the visualization of time evolution right,
         the repeated time moments have to be gotten rid of. time_cache serves for this purpose. 
         """
-        time_cache = -1
+        # time_cache = -1
 
-        for (bin, time) in pairs(sol.t)
-            if time != time_cache
-                push!(ant_coor_x[theta], sol.u[bin][1])
-                push!(ant_coor_y[theta], sol.u[bin][2])
-#                 push!(ant_v_x[theta], sol.u[bin][3])
-#                 push!(ant_v_y[theta], sol.u[bin][4])
-                push!(ant_direction[theta], sol.u[bin][3])
-            time_cache = time
+        # for (bin, time) in pairs(sol.t)
+        #     if time != time_cache
+        #         push!(ant_coor_x[theta], sol.u[bin][1])
+        #         push!(ant_coor_y[theta], sol.u[bin][2])
+        #         push!(ant_direction[theta], sol.u[bin][3])
+        #     time_cache = time
 
-            end
-        end
-        
-#         if save_plot
-#             plot!(sol,vars=(1,2), legend=false, color=:white, linewidth = 1, linestyle = :dot, xlims=(-domain+r, domain-r), ylims=(-domain+r, domain-r))
-#         end
-
+        #     end
+        # end
     end
     
     if save_plot
@@ -166,10 +175,10 @@ function ode_solver(n, speed; random_direction=true, init_pos=(0,0), init_direct
         end
     end
     
-    return (ant_coor_x, ant_coor_y, ant_direction)
+    return (time_steps, ant_coor_x, ant_coor_y)
 end
 
-function get_freq_array(ant_coor_x, ant_coor_y)
+function get_freq_array(time_steps, ant_coor_x, ant_coor_y)
     hist = zeros(freq_plot_intervals, freq_plot_intervals)
     function coor_to_histpos(x_coor, y_coor)
         unit_length = domain*2/freq_plot_intervals
@@ -189,21 +198,33 @@ function get_freq_array(ant_coor_x, ant_coor_y)
         end
         return histpos_x, histpos_y
     end
-    for (i1, theta) in enumerate(ant_coor_x)
-        for (i2, time_pt) in enumerate(theta)
-            histpos = coor_to_histpos(ant_coor_x[i1][i2], ant_coor_y[i1][i2])
+
+    for (theta, time_step) in enumerate(time_steps)
+        coor_x_arr = ant_coor_x[theta, 1:time_step]
+        coor_y_arr = ant_coor_y[theta, 1:time_step]
+        for (coor_x, coor_y) in zip(coor_x_arr, coor_y_arr)
+            histpos = coor_to_histpos(coor_x, coor_y)
             hist[histpos[1],histpos[2]] = hist[histpos[1],histpos[2]] + 1
         end
     end
+
+
+
+    # for (i1, theta) in enumerate(ant_coor_x)
+    #     for (i2, time_pt) in enumerate(theta)
+    #         histpos = coor_to_histpos(ant_coor_x[i1][i2], ant_coor_y[i1][i2])
+    #         hist[histpos[1],histpos[2]] = hist[histpos[1],histpos[2]] + 1
+    #     end
+    # end
     return hist
 end
 
-function produce_freq_plot(ant_coor_x, ant_coor_y)
-    the_array = get_freq_array(ant_coor_x, ant_coor_y)
-    x_hist, y_hist = range(-domain, length=freq_plot_intervals, domain), range(-domain, length=no_freq_intervals, domain)
-    traj_plot = heatmap(x_hist, y_hist, the_array', dpi=300, title=join(["Frequency plot (t_interval = ", time_interval, ", x,y_interval = ", domain/freq_plot_intervals]))
-    savefig(traj_plot, join([directory, time_interval, "_", traj_plot_intervals, ".png"]))
-end
+# function produce_freq_plot(ant_coor_x, ant_coor_y)
+#     the_array = get_freq_array(ant_coor_x, ant_coor_y)
+#     x_hist, y_hist = range(-domain, length=freq_plot_intervals, domain), range(-domain, length=no_freq_intervals, domain)
+#     traj_plot = heatmap(x_hist, y_hist, the_array', dpi=300, title=join(["Frequency plot (t_interval = ", time_interval, ", x,y_interval = ", domain/freq_plot_intervals]))
+#     savefig(traj_plot, join([directory, time_interval, "_", traj_plot_intervals, ".png"]))
+# end
 
 # coor chooses whether to plot vy against y or v_theta against theta. Fill in either "y" or "theta".
 function plot_phase_space(t;typ="plot",coor="y")

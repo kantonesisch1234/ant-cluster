@@ -1,8 +1,8 @@
 #!/usr/lmp/julia/bin/julia
 using Profile
 
-include("random_potential.jl")
-println("random_potential.jl loaded")
+# include("random_potential.jl")
+# println("random_potential.jl loaded")
 include("ODE_solver_reduced.jl")
 println("ODE_solver_reduced.jl loaded")
 include("save_data.jl")
@@ -101,9 +101,9 @@ function vy(x,y)
 end
 
 function simulate(n)
-    ant_coor_x, ant_coor_y, ant_direction = ode_solver(n, speed, init_pos = pos, init_direction = direction, random_direction = false, eq=pot_type)
-    hist = get_freq_array(ant_coor_x, ant_coor_y)
-    #save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
+    time_steps, ant_coor_x, ant_coor_y = ode_solver(n, speed, init_pos = pos, init_direction = direction, random_direction = false, eq=pot_type)
+    hist = get_freq_array(time_steps, ant_coor_x, ant_coor_y)
+    save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
 end
 
 # potential = [v(i, j) for j in y, i in x]
