@@ -8,7 +8,9 @@ println("ODE_solver_reduced.jl loaded")
 include("save_data.jl")
 println("save_data.jl loaded")
 
-# ARGS = [1D/2D, n, domain, time_max, time_interval, potential_center, potential_sd, A, D2, threshold, freq_plot_intervals, group_name, run_name]
+# ARGS = [1D/2D, n, domain, time_max, time_interval, potential_center, potential_sd, A, D2, threshold, 
+# freq_plot_intervals, group_name, run_name, mode]
+# The argument "mode" can be "n" (no noise) or "s" (simulation). "n" is for creating a standard no-noise file that helps find focus point. 
 
 # 1D Gaussian: 1, 2D Gaussian: 2
 const gaussian_dim = ARGS[1]
@@ -24,6 +26,9 @@ const threshold = tryparse(Float64,ARGS[10])
 const freq_plot_intervals = tryparse(Int64,ARGS[11])
 const group_name = ARGS[12]
 const run_name = ARGS[13]
+const mode = ARGS[14]
+
+@assert mode == "n" || mode == "s"
 
 println("Parsed the arguments:")
 println("group_name: $(group_name)")
@@ -49,7 +54,7 @@ function create_dir(dir)
 end
 
 data_directory = "./data"
-json_file_directory = joinpath(data_directory, "json_files")
+json_file_directory = joinpath(data_directory, "data_files")
 group_directory = joinpath(json_file_directory, group_name)
 create_dir(data_directory)
 create_dir(json_file_directory)
@@ -104,6 +109,20 @@ function simulate(n)
     time_steps, ant_coor_x, ant_coor_y = ode_solver(n, speed, init_pos = pos, init_direction = direction, random_direction = false, eq=pot_type)
     hist = get_freq_array(time_steps, ant_coor_x, ant_coor_y)
     save_data_to_jld2(hist, joinpath(group_directory, "$(run_name).jld2"))
+    save_data_to_json(ARGS, joinpath(group_directory, "$(run_name)_parameters.json"))
+    focus_idx = find_focus(hist)
+    if mode == "n"
+        save_data_to_jld2(focus_idx, joinpath(group_directory, "focus_idx.jld2"))
+    end
+end
+
+# Function to find focus
+function find_focus(hist)
+    no_noise_density_along_x_axis = hist[:,trunc(Int, freq_plot_intervals/2)]
+    focus_x = -domain + (findmax(no_noise_density_along_x_axis)[2]-1)*2*domain/freq_plot_intervals
+    focus_coor = (focus_x,0)
+    focus_idx = (trunc(Int,(domain+focus_coor[1])/(2*domain/freq_plot_intervals)), trunc(Int, freq_plot_intervals/2))
+    return focus_idx
 end
 
 # potential = [v(i, j) for j in y, i in x]

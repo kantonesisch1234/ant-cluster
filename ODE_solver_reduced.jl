@@ -219,12 +219,12 @@ function get_freq_array(time_steps, ant_coor_x, ant_coor_y)
     return hist
 end
 
-# function produce_freq_plot(ant_coor_x, ant_coor_y)
-#     the_array = get_freq_array(ant_coor_x, ant_coor_y)
-#     x_hist, y_hist = range(-domain, length=freq_plot_intervals, domain), range(-domain, length=no_freq_intervals, domain)
-#     traj_plot = heatmap(x_hist, y_hist, the_array', dpi=300, title=join(["Frequency plot (t_interval = ", time_interval, ", x,y_interval = ", domain/freq_plot_intervals]))
-#     savefig(traj_plot, join([directory, time_interval, "_", traj_plot_intervals, ".png"]))
-# end
+function produce_freq_plot(time_steps, ant_coor_x, ant_coor_y)
+    the_array = get_freq_array(time_steps, ant_coor_x, ant_coor_y)
+    x_hist, y_hist = range(-domain, length=freq_plot_intervals, domain), range(-domain, length=no_freq_intervals, domain)
+    traj_plot = heatmap(x_hist, y_hist, the_array', dpi=300, title=join(["Frequency plot (t_interval = ", time_interval, ", x,y_interval = ", domain/freq_plot_intervals]))
+    savefig(traj_plot, join([directory, time_interval, "_", traj_plot_intervals, ".png"]))
+end
 
 # coor chooses whether to plot vy against y or v_theta against theta. Fill in either "y" or "theta".
 function plot_phase_space(t;typ="plot",coor="y")
