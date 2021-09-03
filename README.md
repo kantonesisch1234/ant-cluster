@@ -11,7 +11,7 @@ run_name: name of data files
 
 mode: n (no noise, with an extra `focus_idx.jld2` file indicating position of focus point, should choose group_name of `standard`); s (normal simulation)
 
-Example: run the command `julia cluster.jl 2 10000 40 100 0.01 -30 0.5 1 0 0.05 50 D2=0.002 standard run1 n`
+Example: run the command `julia cluster.jl 2 10000 40 100 0.01 -30 0.5 1 0 0.05 50 standard run1 n`
 
 Example: run the command `julia cluster.jl 2 10000 40 100 0.01 -30 0.5 1 0.002 0.05 50 D2=0.002 run1 s`. 
 
