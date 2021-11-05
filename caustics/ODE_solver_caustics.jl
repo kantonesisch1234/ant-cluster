@@ -38,9 +38,10 @@ function deterministic(du, u, p, t, A=A, D2=D2, threshold=threshold)
     # We have to define K31,K32,K33 before that, where dM/dt = KM, and to do that, we will need the second-order partial derivatives of potential
 
     rho_x, rho_y = pot[1], pot[2]
-    rho_xx = hessianv(u[1],u[2])[1,1]
-    rho_xy = hessianv(u[1],u[2])[1,2]
-    rho_yy = hessianv(u[1],u[2])[2,2]
+    hessian_matrix = hessianv(u[1],u[2])
+    rho_xx = hessian_matrix[1,1]
+    rho_xy = hessian_matrix[1,2]
+    rho_yy = hessian_matrix[2,2]
 
     # Define matrix K
     K11, K12, K21, K22 = 0, 0, 0, 0
