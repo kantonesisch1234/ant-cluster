@@ -86,7 +86,7 @@ function hit_wall_condition(u, t, integrator, domain=domain)
 end
 
 
-# Caustic condition M22=0, continuous callback
+# General caustic condition, continuous callback
 function caustic_condition(u, t, integrator)
     cos(u[3])*u[8] - sin(u[3])*u[5]
 end
