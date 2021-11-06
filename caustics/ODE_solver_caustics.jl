@@ -5,7 +5,6 @@ using ForwardDiff
 
 gradv(x,y) = ForwardDiff.gradient(z -> v(z[1], z[2]), [x, y])
 hessianv(x,y) = ForwardDiff.hessian(z -> v(z[1],z[2]), [x, y])
-caustic_points = []
 
 function deterministic(du, u, p, t, A=A, D2=D2, threshold=threshold)
     
@@ -34,9 +33,6 @@ function deterministic(du, u, p, t, A=A, D2=D2, threshold=threshold)
         end
     end
 
-    # Adding three extra variables: M22, M32 and dotM22, where M22 and M32 are entries of monodromy matrix and dotM22 its time derivative
-    # We have to define K31,K32,K33 before that, where dM/dt = KM, and to do that, we will need the second-order partial derivatives of potential
-
     rho_x, rho_y = pot[1], pot[2]
     hessian_matrix = hessianv(u[1],u[2])
     rho_xx = hessian_matrix[1,1]
@@ -47,7 +43,7 @@ function deterministic(du, u, p, t, A=A, D2=D2, threshold=threshold)
     K11, K12, K21, K22 = 0, 0, 0, 0
     K13 = -sin(u[3])
     K23 = cos(u[3])
-    K31 = A*(-rho_xx*sin(u[3])+rho_xy*cos(u[3]))/(threshold+vpot) - A*rho_x*(-rho_x*sin(u[3]+rho_y*cos(u[3])))/(threshold+vpot)^2
+    K31 = A*(-rho_xx*sin(u[3])+rho_xy*cos(u[3]))/(threshold+vpot) - A*rho_x*(-rho_x*sin(u[3])+rho_y*cos(u[3]))/(threshold+vpot)^2
     K32 = A*(rho_yy*cos(u[3])-rho_xy*sin(u[3]))/(threshold+vpot) - A*rho_y*(-rho_x*sin(u[3])+rho_y*cos(u[3]))/(threshold+vpot)^2
     K33 = A*(-rho_y*sin(u[3])-rho_x*cos(u[3]))/(threshold+vpot)
 
