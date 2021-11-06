@@ -1,7 +1,7 @@
 #!/usr/ds/julia/bin/julia -t 1
 include("save_data.jl")
 println("save_data.jl loaded")
-using Plots, LaTeXStrings
+using Plots
 pyplot()
 
 # This code serves to plot only one run instead of an entire group, so we need to specify also the run_name
@@ -14,30 +14,19 @@ function create_dir(dir)
 end
 
 function plot_caustics_to_2dmap(freq_array, lastcoor_array, title, filename)
-    filepath1 = joinpath(plot_path, join([filename, "_density.png"]))
-    filepath2 = joinpath(plot_path, join([filename, "_caustics.png"]))
+    filepath = joinpath(plot_path, join([filename, ".png"]))
     x_freq, y_freq = range(-domain, length=freq_plot_intervals, domain), range(-domain, length=freq_plot_intervals, domain)
     clim = (0,maximum(freq_array))
     freq_plot = heatmap(x_freq, y_freq, freq_array', dpi=600, clim=clim, title=title, legends=false, xlims=(-10,10), ylims=(-10,10))
-    savefig(freq_plot, filepath1)
     lastcoor_x, lastcoor_y = lastcoor_array[1,:], lastcoor_array[2,:]
-    scatter!(lastcoor_x, lastcoor_y, markersize=0.2, markercolor=:green)
-    savefig(freq_plot, filepath2)
-end
-
-function plot_caustics_3d(lastcoor_array, title, filename)
-    filepath = joinpath(plot_path, join([filename, ".png"]))
-    lastcoor_x, lastcoor_y, lastcoor_phi = lastcoor_array[1,:], lastcoor_array[2,:], lastcoor_array[3,:]
-    caustics_plot = plot(lastcoor_x,lastcoor_x,lastcoor_phi, legends=false, xlabel=L"x", ylabel=L"y", zlabel=L"\varphi",
-    xlims=(-domain,domain), ylims=(-domain,domain), dpi=600)
-    savefig(caustics_plot, filepath)
+    scatter!(lastcoor_x, lastcoor_y, markersize=5, markercolor=:green)
+    savefig(freq_plot, filepath)
 end
 
 function plot_caustics_2d(lastcoor_array, title, filename)
     filepath = joinpath(plot_path, join([filename, ".png"]))
     lastcoor_x, lastcoor_y = lastcoor_array[1,:], lastcoor_array[2,:]
-    caustics_plot = scatter(lastcoor_x, lastcoor_y, markersize=0.2, markercolor=:green, legends=false, 
-    xlabel=L"x", ylabel=L"y", xlims=(-domain,domain), ylims=(-domain,domain),dpi=600)
+    caustics_plot = scatter(lastcoor_x, lastcoor_y, markersize=5, legends=false)
     savefig(caustics_plot, filepath)
 end
 
@@ -108,6 +97,5 @@ println("Reading data from $(run_name).jld2 ...")
 hist = read_data_from_jld2(run_path)
 lastcoor = read_data_from_jld2(lastcoor_path)
 
-plot_caustics_2d(lastcoor, " ", "caustics_plot")
-plot_caustics_to_2dmap(hist, lastcoor, " ", "caustics_plot_2d")
-plot_caustics_3d(lastcoor, " ", "caustics_plot_3d")
+# plot_caustics_to_2dmap(hist, lastcoor, "D2=$(D2)", "2D_density_D2=$(D2)")
+plot_caustics_2d(lastcoor, "D2=$(D2)", "caustics_plot")
